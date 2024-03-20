@@ -4,6 +4,16 @@ import snappy
 from copy import copy
 import random
 
+# Constants
+ZERO_RATE = 0.29
+CALLDATA_SIZE = 30_000_000
+CALLDATA_ZEROS = int(CALLDATA_SIZE / 4 * ZERO_RATE)
+CALLDATA_NONZERO = int(CALLDATA_SIZE / 16 * (1 - ZERO_RATE))
+assert (CALLDATA_ZEROS * 4 + CALLDATA_NONZERO * 16) <= CALLDATA_SIZE
+
+# Load Private Key
+with open("sepolia_pk.txt", "r") as file:
+    private_key = file.read().strip()
 
 def distribute_values_evenly(arr, value):
     """
@@ -57,7 +67,6 @@ def generate_data_optimized(zero_calldata_size, nonzero_calldata_size):
     modified_data = bytes(data_list)
     return modified_data
 
-
 def grind_max_size_block_optimized():
     largest = 0
     largest_data = None
@@ -68,17 +77,8 @@ def grind_max_size_block_optimized():
             largest = len(data_comp)
             largest_data = data_comp
             if CALLDATA_ZEROS:
-                print(f"CALLDATA_ZEROS = {data.count(0):,} Size: {largest/1024**2:,.6f} MB | COMP SIZE: {len(data_comp)/1024**2:,.6f} MB")
+                print(f"CALLDATA_ZEROS = {data.count(0):,} Size: {len(data)/1024**2:,.6f} MB | COMP SIZE: {len(data_comp)/1024**2:,.6f} MB")
     return largest, largest_data
-
-    
-# Constants
-ZERO_RATE = 0.29
-CALLDATA_SIZE = 17_000_000
-CALLDATA_ZEROS = int(CALLDATA_SIZE / 4 * ZERO_RATE)
-CALLDATA_NONZERO = int(CALLDATA_SIZE / 16 * (1 - ZERO_RATE))
-assert (CALLDATA_ZEROS * 4 + CALLDATA_NONZERO * 16) <= CALLDATA_SIZE
-
 
 results = {}
 for i in range(1,21):
@@ -94,10 +94,6 @@ calldata = results[max_result.index(max(max_result))+1][0]
 print(f"Iteration {max_result.index(max(max_result))+1} had the max size block")
 ######################################
 
-# Load Private Key
-with open("sepolia_pk.txt", "r") as file:
-    private_key = file.read().strip()
-
 # Private Key to Account
 account = w3.eth.account.from_key(private_key)
 nonce = w3.eth.get_transaction_count(account.address)
@@ -106,12 +102,13 @@ print(f"Sending from {account.address} to {to_address}")
 print(f"Balance of {float(w3.from_wei(w3.eth.get_balance(account.address), 'ether')):,.3f} ETH")
 print(f"Current nonce: {nonce}")
 
+NR_OF_TXS = 1
 signed_transactions = []
 for i in range(NR_OF_TXS):
     # Prepare Transaction
     transaction = {
         'nonce': nonce+i,
-        'to': "0x000000000000000000000000000000000000dEaD",
+        'to': to_address,
         'value': w3.to_wei(0, 'ether'),
         'gas': 29967996,
         'maxFeePerGas': 40, #max_fee_per_gas,
