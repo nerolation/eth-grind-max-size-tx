@@ -68,31 +68,30 @@ def grind_max_size_block_optimized():
             largest = len(data_comp)
             largest_data = data_comp
             if CALLDATA_ZEROS:
-                print(f"CALLDATA_ZEROS = {data.count(0):,} Size: {largest/1024**2:,.6f} MB | COMP SIZE: {len(data):,.6f}")
+                print(f"CALLDATA_ZEROS = {data.count(0):,} Size: {largest/1024**2:,.6f} MB | COMP SIZE: {len(data_comp)/1024**2:,.6f} MB")
     return largest, largest_data
 
     
 # Constants
 ZERO_RATE = 0.29
-CALLDATA_SIZE = 30_000_000
+CALLDATA_SIZE = 17_000_000
 CALLDATA_ZEROS = int(CALLDATA_SIZE / 4 * ZERO_RATE)
 CALLDATA_NONZERO = int(CALLDATA_SIZE / 16 * (1 - ZERO_RATE))
 assert (CALLDATA_ZEROS * 4 + CALLDATA_NONZERO * 16) <= CALLDATA_SIZE
 
 
 results = {}
-for i in range(1,101):
+for i in range(1,21):
     CALLDATA_ZEROS = int(CALLDATA_SIZE / 4 * ZERO_RATE)
     CALLDATA_NONZERO = int(CALLDATA_SIZE / 16 * (1 - ZERO_RATE))
     assert (CALLDATA_ZEROS * 4 + CALLDATA_NONZERO * 16) <= CALLDATA_SIZE
     largest, largest_data = None,None
     largest, largest_data = grind_max_size_block_optimized()
     results[i] = (largest_data, CALLDATA_ZEROS)
-    print(f"{i}: {largest/1024:,.0f}")
     
 max_result = [len(results[i][0]) for i in results.keys()]
 calldata = results[max_result.index(max(max_result))+1][0]
-
+print(f"Iteration {max_result.index(max(max_result))+1} had the max size block")
 ######################################
 
 # Load Private Key
